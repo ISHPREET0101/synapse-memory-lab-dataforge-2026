@@ -9,12 +9,13 @@ The browser experience opens with a deterministic toy simulation already running
 ## Submission status
 
 - **Local artifact:** implemented, tested, and buildable.
+- **Private GitHub review repository:** https://github.com/ISHPREET0101/synapse-memory-lab-dataforge-2026
 - **Public artifact URL:** **not deployed yet**.
 - **Public source repository:** **not published yet**.
 - **Official BDH/BDH-CQ checkpoint:** **not run**. No live checkpoint is bundled or called.
 - **Evidence boundary:** the labs are local toy/abstracted computations; paper metrics and architecture properties are author-reported, not independently reproduced here.
 
-Those two missing public links remain required submission work. Do not replace the status above with placeholders presented as live links.
+The private repository is available for team review; PS-1 still requires a public source repository and a no-sign-in public artifact. Do not replace the status above with placeholders presented as live links.
 
 ## Audience, prerequisites, and learning objectives
 
