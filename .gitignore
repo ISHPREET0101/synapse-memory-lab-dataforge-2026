@@ -1,0 +1,21 @@
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+tmp/
+scripts/__pycache__/
+output/*.zip
+
+# Local environment files (keep the documented template)
+.env
+.env.*
+!.env.example
+
+# Tooling and editor state
+.vite/
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

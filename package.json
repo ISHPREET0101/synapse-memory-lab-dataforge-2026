@@ -1,0 +1,26 @@
+{
+  "name": "synapse-memory-lab",
+  "version": "1.0.0",
+  "description": "Interactive explainer: synaptic plasticity as attention/memory in BDH. DataForge 2026 Pathway Track.",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --reporter=default",
+    "build": "npm run typecheck && vite build --emptyOutDir",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "validate:submission": "npm run test && npm run build && node scripts/validate-submission.mjs",
+    "check": "npm run validate:submission"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "5.4.21",
+    "vitest": "2.1.9"
+  }
+}

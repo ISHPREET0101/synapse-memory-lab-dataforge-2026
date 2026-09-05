@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synapse Memory Lab — Hebbian Writes and Attention-Like Memory</title>
+  <meta name="description" content="An interactive, evidence-labeled explainer of fixed-state Hebbian memory, causal linear attention, and interference in a deterministic browser toy inspired by BDH." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='6' fill='%236ee0b0'/></svg>" />
+</head>
+<body>
+  <nav id="topnav" aria-label="Sections">
+    <a class="brand" href="#top">Synapse&nbsp;Memory&nbsp;Lab</a>
+    <a href="#claim">The claim</a>
+    <a href="#orientation">Start here</a>
+    <a href="#lab1">Lab 1 · Writes</a>
+    <a href="#lab2">Lab 2 · Equivalence</a>
+    <a href="#lab3">Lab 3 · Interference</a>
+    <a href="#challenge">60-second test</a>
+    <a href="#bdh">BDH module</a>
+    <a href="#limits">Limits</a>
+    <a href="#papers">Sources</a>
+    <button id="tour-btn" class="btn btn-small" type="button">Guided tour</button>
+  </nav>
+
+  <header id="top" class="hero">
+    <div class="hero-inner">
+      <p class="kicker">DataForge 2026 · Pathway Track · interactive explainer</p>
+      <h1>Hebbian writes can build <em>attention-like memory</em>.</h1>
+      <p class="hero-sub">
+        A growing attention history can sometimes be algebraically reorganized into an evolving,
+        fixed-shape state. This page lets you inspect that idea in a deterministic toy, verify one
+        exact recurrent-versus-history identity, contrast it with softmax, and then stress a separate
+        associative memory until interference appears.
+      </p>
+      <p class="hero-claim" id="claim">
+        <span class="claim-label">The one-sentence claim (falsifiable):</span>
+        Attention-like retrieval can be implemented by incremental Hebbian-like outer-product
+        writes to a fixed-shape recurrent state; in BDH-GPU, that evolving state—not a
+        token-by-token KV cache—is the mechanism for within-session memory.
+        <span class="claim-test">This is not a claim of exact equivalence to softmax attention. Lab 2 states and numerically tests the narrower equality that does hold.</span>
+      </p>
+      <p class="toy-note"><span class="tag tag-live">live + synthetic</span> The labs are an
+        <strong>independent, untrained toy</strong> and an abstract associative-memory experiment—not
+        an official Pathway model or a reproduced BDH benchmark. The architectural connection is
+        grounded in the <a href="https://arxiv.org/abs/2509.26507">primary BDH paper</a>; deviations
+        are listed in <a href="#limits">Limitations</a>.</p>
+    </div>
+  </header>
+
+  <main>
+    <section id="orientation" class="lab">
+      <div class="lab-head">
+        <span class="step-badge">Start here</span>
+        <h2>Who this is for, and what you will learn</h2>
+      </div>
+      <div class="audience-cards">
+        <article class="audience-card">
+          <h3>Audience</h3>
+          <p>ML-literate students and practitioners who know Transformer attention but have not studied BDH.</p>
+        </article>
+        <article class="audience-card">
+          <h3>Prerequisites</h3>
+          <p>Vectors, matrix multiplication, dot-product and softmax attention, causal sequence processing, and the purpose of a KV cache. No neuroscience background is needed.</p>
+        </article>
+      </div>
+      <div class="objective-cards" aria-label="Learning objectives">
+        <article class="objective-card"><h3>1 · Trace the state</h3><p>Identify non-negative activity <span class="eq">x</span>, a possibly signed low-rank message, the stored compressed state <span class="eq">ρ</span>, and the derived conceptual synapse matrix.</p></article>
+        <article class="objective-card"><h3>2 · Verify the algebra</h3><p>Explain why a recurrent outer-product accumulator and its explicit-history sum match, while softmax is only a contrasting operation.</p></article>
+        <article class="objective-card"><h3>3 · Respect causality</h3><p>Recognize that the current query reads the pre-write state, so the current key/value pair is excluded from its own retrieval.</p></article>
+        <article class="objective-card"><h3>4 · State the boundary</h3><p>Separate live toy measurements, a generic associative-memory stress test, and author-reported claims from the primary papers.</p></article>
+      </div>
+    </section>
+    <!-- ==================== LAB 1 ==================== -->
+    <section id="lab1" class="lab">
+      <div class="lab-head">
+        <span class="step-badge">Lab 1</span>
+        <h2>Watch a fixed-shape state being written</h2>
+        <p>
+          Each token reads the previous state before writing
+          <span class="eq">ρ ← γρ + x ⊗ v*</span>. The stored recurrent state is always
+          <strong>96×12 = 1,152 floats</strong>, whatever the sequence length. The left view shows
+          non-negative toy activity <span class="eq">x</span>; gold rings mark neurons contributing to
+          the current write. The right view is the derived 96×96 projection
+          <span class="eq">ρD<sub>y</sub></span>, not another stored array. Because the learned projections
+          are replaced by signed random matrices here, <span class="eq">v*</span>, the raw write,
+          <span class="eq">ρ</span>, and <span class="eq">ρD<sub>y</sub></span> may contain positive and
+          negative values. <a href="https://arxiv.org/html/2509.26507#S3.SS2">Primary evidence: BDH-GPU definition and state-space form</a>
+          <span class="tag tag-precomp">source-grounded</span>
+        </p>
+      </div>
+      <div class="lab-grid">
+        <figure class="panel">
+          <figcaption>Neuron activity x <span class="tag tag-live">live + synthetic</span></figcaption>
+          <canvas id="lab1-neurons" aria-label="Live non-negative toy neuron activity" aria-describedby="lab1-summary">Live neuron activity visualization. Use the text status below for the current token, step, and active fraction.</canvas>
+        </figure>
+        <figure class="panel">
+          <figcaption>Derived effective matrix ρD<sub>y</sub> <span class="tag tag-live">live + synthetic</span></figcaption>
+          <canvas id="lab1-synapses" aria-label="Derived signed projection of the fixed 96 by 12 recurrent state" aria-describedby="lab1-summary">Live signed effective-matrix visualization. The stored recurrent state has 1,152 floats and does not grow with the token count.</canvas>
+        </figure>
+      </div>
+      <div class="controls" role="group" aria-label="Lab 1 controls">
+        <div class="readout" id="lab1-summary" role="status" aria-live="polite" aria-atomic="true">token: <b id="lab1-token">—</b> · step <b id="lab1-steps">0</b> · <b id="lab1-sparsity">—</b>
+          <span class="hint">This is measured toy activity. The paper's trained-model sparsity observations are separate, author-reported evidence.</span>
+        </div>
+        <label>update scale <input id="lab1-scale" type="range" min="0.05" max="0.8" step="0.05" value="0.35" /> <span id="lab1-scale-val">0.35</span></label>
+        <label>synapse decay γ <input id="lab1-gamma" type="range" min="0" max="1" step="0.05" value="0.9" /> <span id="lab1-gamma-val">0.90</span></label>
+        <label>speed <input id="lab1-speed" type="range" min="1" max="20" step="1" value="6" /> <span id="lab1-speed-val">6</span> tok/s</label>
+        <button id="lab1-pause" class="btn" type="button">Pause</button>
+        <button id="lab1-step" class="btn" type="button">Single step</button>
+        <button id="lab1-reset" class="btn" type="button">Reset</button>
+      </div>
+      <p class="lab-insight" id="tour-1">
+        <strong>Predict, then test:</strong> before moving γ, say what should happen. At <strong>γ = 0</strong>,
+        each write replaces the old recurrent state; at <strong>γ = 1</strong>, prior writes accumulate.
+        The toy uses scalar γ as a transparent intervention. It is not a complete implementation of the
+        paper's positional operator. The preset token list still exists in the visualizer to drive and label
+        the demo; the fixed-state claim applies to the toy cell's recurrent state, not to the entire teaching UI.
+      </p>
+    </section>
+
+    <!-- ==================== LAB 2 ==================== -->
+    <section id="lab2" class="lab">
+      <div class="lab-head">
+        <span class="step-badge">Lab 2</span>
+        <h2>Test the exact identity—then contrast softmax</h2>
+          <p>
+          The green output comes from a fixed 12×8 recurrent accumulator; the blue output recomputes
+          the same causal decayed linear-attention sum from every earlier key/value pair:
+          <span class="eq">Σ<sub>τ&lt;t</sub> γ<sup>t−1−τ</sup>(q<sub>t</sub>·k<sub>τ</sub>)v<sub>τ</sub></span>.
+          These are two implementations of the <strong>same unnormalized operation</strong>, so the displayed
+          maximum component error should be near floating-point roundoff. The orange series separately
+          applies normalized exponential softmax weights. It is a contrast, not an equivalent target, and
+          it need not match either linear-attention output.
+          <a href="https://arxiv.org/html/2509.26507#S6.SS1">Primary evidence: BDH-GPU linear-attention analysis</a>
+          <span class="tag tag-precomp">source-grounded</span>
+        </p>
+      </div>
+      <div class="lab-grid">
+        <figure class="panel panel-wide">
+          <figcaption>Eight output components: recurrent (green), explicit history (blue), and softmax contrast (orange)
+            <span class="tag tag-live">live + synthetic</span></figcaption>
+          <div id="lab2-tokens" class="token-strip" aria-label="Synthetic token sequence; the highlighted item is the current query"></div>
+          <canvas id="lab2-bars" aria-label="Recurrent and explicit-history linear-attention outputs with a separate softmax contrast" aria-describedby="lab2-summary">Grouped component bars. The green and blue outputs should overlap; the orange softmax contrast may differ. The numeric error is reported below.</canvas>
+        </figure>
+      </div>
+      <div class="controls" role="group" aria-label="Lab 2 controls">
+        <label>query position t <input id="lab2-query" type="range" min="2" max="15" step="1" value="14" /> <span id="lab2-query-val">14</span></label>
+        <label>synapse decay γ <input id="lab2-gamma" type="range" min="0.5" max="1" step="0.01" value="0.95" /> <span id="lab2-gamma-val">0.95</span></label>
+        <div class="readout" id="lab2-summary" role="status" aria-live="polite" aria-atomic="true">recurrent vs explicit-history check: <b id="lab2-corr">—</b>
+          <span class="hint">The first two outputs should agree up to floating-point rounding. Softmax is a separate contrast and is not expected to match.</span>
+        </div>
+      </div>
+      <p class="lab-insight" id="tour-2">
+        <strong>Explain the result:</strong> recurrence is possible because distributivity lets the history sum
+        be accumulated as outer products. The exact equality tested here is
+        <em>recurrent state output = explicit-history decayed linear-attention output</em>. It is not
+        <em>recurrent state output = softmax output</em>. The query reads the pre-write state, so its own
+        key/value pair is excluded; moving γ below 1 discounts older terms.
+      </p>
+    </section>
+
+    <!-- ==================== LAB 3 ==================== -->
+    <section id="lab3" class="lab">
+      <div class="lab-head">
+        <span class="step-badge">Lab 3</span>
+        <h2>Stress a generic associative memory</h2>
+        <p>
+          This separate controlled toy stores random unit key→value pairs in one outer-product matrix:
+          <span class="eq">M = Σ k<sub>i</sub> ⊗ v<sub>i</sub></span>, then reads
+          <span class="eq">v̂<sub>i</sub> = k<sub>i</sub><sup>T</sup>M</span>. A cue is correct only when its
+          intended stored value is the nearest value by cosine similarity. The second curve reports the
+          strongest cosine found with any wrong stored value. Points are deterministic aggregate results
+          from three seeded trials, recomputed in the browser. This demonstrates cross-talk in this
+          <strong>generic linear associative memory</strong>; it does not measure or predict BDH or BDH-CQ capacity.
+        </p>
+      </div>
+      <div class="lab-grid">
+        <figure class="panel panel-wide">
+          <figcaption>Nearest-neighbor accuracy (green) and maximum wrong-value cosine (dashed red) <span class="tag tag-live">live + synthetic</span></figcaption>
+          <canvas id="lab3-chart" aria-label="Nearest-neighbor retrieval accuracy and maximum wrong-value cosine by association load" aria-describedby="lab3-cue-out">Live two-series chart. Use the text result below for the selected load, accuracy, and strongest wrong-value cosine.</canvas>
+        </figure>
+      </div>
+      <div class="controls" role="group" aria-label="Lab 3 controls">
+        <label>state dimension d
+          <select id="lab3-dim"><option value="32">32</option><option value="64" selected>64</option><option value="128">128</option></select>
+        </label>
+        <label>stress-test load <input id="lab3-load" type="range" min="1" max="200" step="1" value="20" /> <span id="lab3-load-val">20</span></label>
+        <button id="lab3-cue" class="btn" type="button">Re-run cue test</button>
+        <div class="readout" id="lab3-cue-out" role="status" aria-live="polite" aria-atomic="true">Waiting for the live nearest-neighbor cue test.</div>
+      </div>
+      <p class="lab-insight" id="tour-3">
+        <strong>Predict, then test:</strong> predict how the green accuracy and red wrong-match curve will
+        change when load rises or dimension increases. Test your prediction, then explain the result using
+        cross-terms <span class="eq">(k<sub>j</sub>·k<sub>i</sub>)v<sub>i</sub></span>. The curve is empirical,
+        seed-dependent evidence about this implemented toy only. There is no universal cliff at
+        <span class="eq">load = dimension</span> and no BDH-CQ capacity conclusion here.
+      </p>
+    </section>
+
+    <section id="challenge" class="lab">
+      <div class="lab-head">
+        <span class="step-badge">60-second challenge</span>
+        <h2>Predict → test → explain</h2>
+        <p>Say each prediction aloud before touching the control. A good explanation names the state, the operation, and the evidence boundary—not just what the animation looked like.</p>
+      </div>
+      <div class="assessment-cards">
+        <article class="assessment-card">
+          <h3>0–20 s · Decay</h3>
+          <p><strong>Predict:</strong> what survives after the next Lab 1 write at γ = 0 versus γ = 1? <strong>Test:</strong> reset and single-step. <strong>Explain:</strong> use <span class="eq">ρ ← γρ + x⊗v*</span>.</p>
+        </article>
+        <article class="assessment-card">
+          <h3>20–40 s · Equality</h3>
+          <p><strong>Predict:</strong> which Lab 2 series must overlap? <strong>Test:</strong> move query position and γ. <strong>Explain:</strong> cite the displayed maximum absolute error and why softmax is exempt.</p>
+        </article>
+        <article class="assessment-card">
+          <h3>40–60 s · Interference</h3>
+          <p><strong>Predict:</strong> how should load and dimension affect wrong matches? <strong>Test:</strong> change both in Lab 3. <strong>Explain:</strong> call it a seeded generic-memory result, never a calibrated BDH capacity law.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ==================== BDH MODULE ==================== -->
+    <section id="bdh" class="lab bdh-module">
+      <div class="lab-head">
+        <span class="step-badge">BDH module</span>
+        <h2>Map the toy to BDH-GPU—without collapsing the notation</h2>
+        <p>
+          The paper's conceptual graph formulation uses an <span class="eq">n×n</span> synaptic state
+          <span class="eq">σ</span>. BDH-GPU carries a low-rank, compressed attention state
+          <span class="eq">ρ</span> instead. This toy stores <span class="eq">ρ</span> as a 96×12 array in
+          its row-vector convention (the public code field retains the legacy name <span class="eq">sigma</span>)
+          and computes <span class="eq">ρD<sub>y</sub></span> only for display. That displayed projection is
+          an effective interaction matrix; it should not be mislabeled as the full conceptual
+          <span class="eq">σ</span>.
+        </p>
+        <div class="eq-block">
+          <div class="eq-line">v*<sub>t,l−1</sub> = LN(E y<sub>t,l−1</sub>)</div>
+          <div class="eq-line">x<sub>t,l</sub> = x<sub>t,l−1</sub> + (D<sub>x</sub> v*<sub>t,l−1</sub>)⁺</div>
+          <div class="eq-line">read<sub>t,l</sub> = ρ<sub>t−1,l</sub> x<sub>t,l</sub> &nbsp;← pre-write state: τ &lt; t only</div>
+          <div class="eq-line">y<sub>t,l</sub> = (D<sub>y</sub> LN(read<sub>t,l</sub>))⁺ ⊙ x<sub>t,l</sub></div>
+          <div class="eq-line">ρ<sub>t,l</sub> = (ρ<sub>t−1,l</sub> + v*<sub>t,l−1</sub> x<sub>t,l</sub>ᵀ)U &nbsp;← Hebbian-like outer-product write</div>
+        </div>
+        <p>
+          The subscript <span class="eq">t,l−1</span> means the <strong>same token at the previous layer</strong>,
+          not the previous token in the same layer. Cross-token memory enters through
+          <span class="eq">ρ<sub>t−1,l</sub></span>. At inference, trained projections are fixed while activity
+          and recurrent state evolve. The ReLU outputs <span class="eq">x</span> and <span class="eq">y</span>
+          are non-negative; neither that fact nor sparsity implies that <span class="eq">v*</span>, the outer-product
+          write, or <span class="eq">ρ</span> is entrywise non-negative. The paper reports sparse positive
+          activity and connectivity observations in trained models; this toy does not reproduce those findings.
+          <a href="https://arxiv.org/html/2509.26507#S3.SS2">Primary evidence: equations (4), (5), and (8)</a>
+          <span class="tag tag-precomp">author-reported</span>
+        </p>
+        <p>
+          <strong>BDH-CQ is context, not Lab 3's conclusion.</strong> Its authors describe demonstration-conditioned
+          recurrent memory and iterative continuous latent reasoning without inference-time parameter updates.
+          They report 29.5% pass@2 for a 150M-parameter configuration on the public ARC-AGI-1 evaluation set at
+          a computed inference cost of $0.00070 per task. This project did not run BDH-CQ, reproduce those
+          numbers, or establish that latent iteration increases the capacity of the Lab 3 matrix.
+          <a href="https://arxiv.org/html/2608.09888v1">Primary evidence: BDH-CQ paper</a>
+          <span class="tag tag-precomp">author-reported</span>
+        </p>
+      </div>
+      <div class="lab-grid">
+        <figure class="panel panel-wide">
+          <figcaption>BDH-GPU vs a standard cached softmax Transformer at inference — scoped comparison
+            <span class="tag tag-precomp">source-based synthesis</span></figcaption>
+          <div class="table-scroll"><table class="cmp-table">
+            <thead><tr><th>property</th><th>Transformer (softmax attention)</th><th>BDH-GPU (synaptic memory)</th></tr></thead>
+            <tbody>
+              <tr><td>sequence-dependent state</td><td>the usual KV cache adds per-position keys and values</td><td>ρ has a fixed shape for a fixed architecture</td></tr>
+              <tr><td>attention operation</td><td>normalized exponential weighting over cached positions</td><td>linear-attention terms are accumulated in ρ; not an exact softmax identity</td></tr>
+              <tr><td>what changes during a session</td><td>cache contents change; trained weights stay fixed</td><td>x, y, and ρ change; trained projections stay fixed</td></tr>
+              <tr><td>per-position inspection</td><td>cached K/V remain indexed by position</td><td>the aggregate state does not expose a free exact token-by-token map</td></tr>
+              <tr><td>sign</td><td>architecture-dependent</td><td>x and y are non-negative; v*, writes, and ρ may be signed</td></tr>
+              <tr><td>evidence shown here</td><td>conceptual comparison only; no Transformer benchmark runs</td><td>toy mechanism plus author-reported BDH properties; no official checkpoint runs</td></tr>
+            </tbody>
+          </table></div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ==================== LIMITATIONS ==================== -->
+    <section id="limits" class="lab">
+      <div class="lab-head">
+        <span class="step-badge">Honesty</span>
+        <h2>Limitations, deviations, misconceptions</h2>
+      </div>
+      <div class="limits-list">
+        <div class="limit-card"><h3>Our toy is not BDH</h3><p>Single layer, single head, no layer norm, no multi-head
+          factorization, random (untrained) E/D<sub>x</sub>/D<sub>y</sub>. We inject tokens directly into x with a
+          hand-tuned scale; the full layered equations take <span class="eq">x<sub>t,l−1</sub></span> and
+          <span class="eq">y<sub>t,l−1</sub></span> from the previous layer at the same token. Expect a mechanism
+          illustration, not quantitatively calibrated behavior.</p></div>
+        <div class="lab-insight misconception"><strong>Common misconception:</strong> “fixed-state recurrence is
+          softmax attention in another form.” Lab 2 does not show that. It checks an exact identity for
+          <em>causal decayed linear attention</em> and displays softmax as a deliberately non-equivalent contrast.</div>
+        <div class="limit-card"><h3>Only the cell state is fixed-shape</h3><p>The Lab 2 reference deliberately keeps
+          explicit history to verify the recurrent result and the token strip keeps labels for teaching. The
+          <span class="eq">O(1)</span> statement is only with respect to sequence length for the recurrent state of a
+          fixed architecture; that state still costs <span class="eq">O(ND)</span> per configured layer/head.</p></div>
+        <div class="limit-card"><h3>Positional structure is simplified</h3><p>The toy uses scalar decay γ as a
+          controllable forgetting intervention. It does not implement or validate the paper's complete operator
+          <span class="eq">U</span> or its positional variants.</p></div>
+        <div class="limit-card"><h3>Lab 3 is a separate abstraction</h3><p>Nearest-neighbor accuracy and maximum
+          wrong-value cosine are measured for random associations in the implemented matrix. The curve is
+          seed- and setup-dependent. It establishes neither a universal capacity threshold nor a BDH/BDH-CQ capacity result.</p></div>
+        <div class="limit-card"><h3>Signs matter</h3><p>The toy's ReLU activity and readout are non-negative.
+          Signed projections make the low-rank message, outer-product writes, compressed state, and derived
+          effective matrix potentially signed; green/red in the matrix view encodes that distinction.</p></div>
+        <div class="limit-card"><h3>Evidence levels</h3><p>Everything labeled <span class="tag tag-live">live</span> is
+          computed in your browser from synthetic inputs. “Source-grounded” labels identify equations or
+          architectural interpretation. “Author-reported” labels identify paper results that this project did
+          not reproduce. No official BDH or BDH-CQ checkpoint runs in these labs.</p></div>
+      </div>
+    </section>
+
+    <!-- ==================== SOURCES ==================== -->
+    <section id="papers" class="lab sources">
+      <div class="lab-head">
+        <span class="step-badge">Sources</span>
+        <h2>Primary sources</h2>
+      </div>
+      <ol class="paper-list">
+        <li id="ref-bdh">Kosowski, A., Uznański, P., Chorowski, J., Stamirowska, Z., Bartoszkiewicz, M.
+          <em>The Dragon Hatchling: The Missing Link between the Transformer and Models of the Brain.</em>
+          arXiv:2509.26507, 2025. <a href="https://arxiv.org/abs/2509.26507">arxiv.org/abs/2509.26507</a> —
+          BDH equations, Hebbian inference, sparsity and degree-distribution findings. <span class="tag">code: github.com/pathwaycom/bdh (MIT)</span></li>
+        <li id="ref-bdhcq">Pathway. <em>BDH-CQ: In-Context Learning with Recurrent Latent Reasoning.</em>
+          arXiv:2608.09888, 2026. <a href="https://arxiv.org/html/2608.09888v1">arxiv.org/html/2608.09888v1</a> —
+          demonstrations accumulated additively into contextual state; ARC-AGI-1 result at 150M params.</li>
+        <li id="ref-mamba">Gu, A., Dao, T. <em>Mamba: Linear-Time Sequence Modeling with Selective State Spaces.</em>
+          arXiv:2312.00752, 2023. <a href="https://arxiv.org/abs/2312.00752">arxiv.org/abs/2312.00752</a> — the
+          fixed-state alternative lineage BDH is contrasted with (the PS notes BDH-GPU is <em>not</em> an SSM in the Mamba sense).</li>
+        <li id="ref-gla">Yang, S., Wang, B., Shen, Y., Panda, R., Zhang, Y.
+          <em>Gated Linear Attention Transformers with Hardware-Efficient Training.</em> arXiv:2312.06635, 2023.
+          <a href="https://arxiv.org/abs/2312.06635">arxiv.org/abs/2312.06635</a> — linear attention as an
+          RNN with matrix state: the same broad “state plus outer-product write” pattern, without BDH's neuron interpretation.</li>
+        <li id="ref-ttt">Sun, Y., Li, X., Dalal, K., Xu, J., Vikram, A., Zhang, G., Dubois, Y., Lu, X., Al-Shedivat, T., Xiong, W.
+          <em>Learning to (Learn at Test Time): RNNs with Expressive Hidden States.</em> arXiv:2407.04620, 2024.
+          <a href="https://arxiv.org/abs/2407.04620">arxiv.org/abs/2407.04620</a> — hidden state as a machine that
+          trains at test time; a different answer to the same fixed-state/adaptation pressure BDH-CQ addresses.</li>
+        <li id="ref-titans">Behrouz, A., Zharkov, P., Mirhoseini, A. <em>Titans: Learning to Memorize at Test Time.</em>
+          arXiv:2501.00663, 2025. <a href="https://arxiv.org/abs/2501.00663">arxiv.org/abs/2501.00663</a> —
+          test-time memorization with surprise-based plasticity updates, adjacent to BDH's Hebbian writes.</li>
+        <li id="ref-blog">Pathway. <em>From attention to synapses: deriving BDH</em> (BDH explainer series, ch. 2).
+          <a href="https://pathway.com/research/bdh-explainer/bdh-architecture-derivation">pathway.com/research/bdh-explainer</a> —
+          the derivation used in Lab 2, including the kernel linearization and k = q = x merge.</li>
+      </ol>
+      <p class="credits">Built for the DataForge 2026 Pathway Track. Toy implementation, visualizations and text:
+      this team. BDH equations and reported results: Pathway (papers above, MIT-licensed reference code
+      <a href="https://github.com/pathwaycom/bdh">pathwaycom/bdh</a>). Fonts: system stack, no external requests.
+      AI assistance used for drafting and editing, disclosed in README. No cookies, no analytics, no network calls after load.</p>
+    </section>
+  </main>
+
+  <div id="tour-overlay" hidden>
+    <div id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-text">
+      <p id="tour-step-badge">Step 1 of 5</p>
+      <p id="tour-text"></p>
+      <div class="tour-actions">
+        <button id="tour-prev" class="btn" type="button">Back</button>
+        <button id="tour-next" class="btn btn-primary" type="button">Next</button>
+        <button id="tour-exit" class="btn btn-ghost" type="button">Exit tour</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
