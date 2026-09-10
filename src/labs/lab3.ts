@@ -51,7 +51,7 @@ function runNearestNeighborTrial(dimension: number, load: number, seed = 42): Re
   }
 
   let correct = 0;
-  let maxWrongCosine = 0;
+  let maxWrongCosineSum = 0;
   for (let item = 0; item < load; item++) {
     const read = new Float32Array(dimension);
     for (let column = 0; column < dimension; column++) {
@@ -61,17 +61,19 @@ function runNearestNeighborTrial(dimension: number, load: number, seed = 42): Re
     }
     let nearestIndex = -1;
     let nearestCosine = -Infinity;
+    let strongestWrongCosine = -Infinity;
     for (let candidate = 0; candidate < load; candidate++) {
       const similarity = cosine(read, values[candidate]);
-      if (candidate !== item) maxWrongCosine = Math.max(maxWrongCosine, similarity);
+      if (candidate !== item) strongestWrongCosine = Math.max(strongestWrongCosine, similarity);
       if (similarity > nearestCosine) {
         nearestCosine = similarity;
         nearestIndex = candidate;
       }
     }
     if (nearestIndex === item) correct++;
+    maxWrongCosineSum += Number.isFinite(strongestWrongCosine) ? strongestWrongCosine : 0;
   }
-  return { load, accuracy: correct / load, maxWrongCosine };
+  return { load, accuracy: correct / load, maxWrongCosine: maxWrongCosineSum / load };
 }
 
 function averageTrial(dimension: number, load: number): RetrievalPoint {
@@ -79,7 +81,7 @@ function averageTrial(dimension: number, load: number): RetrievalPoint {
   return {
     load,
     accuracy: trials.reduce((sum, point) => sum + point.accuracy, 0) / trials.length,
-    maxWrongCosine: Math.max(...trials.map((point) => point.maxWrongCosine)),
+    maxWrongCosine: trials.reduce((sum, point) => sum + point.maxWrongCosine, 0) / trials.length,
   };
 }
 
@@ -99,21 +101,21 @@ export function initLab3(): void {
   const dimensionControl = dimSel;
   const resultReadout = cueOut;
   const chartCanvas = canvas;
-  chartCanvas.setAttribute('aria-label', 'Nearest-neighbor retrieval accuracy and maximum wrong-value cosine by association load');
+  chartCanvas.setAttribute('aria-label', 'Nearest-neighbor retrieval accuracy and mean strongest wrong-value cosine by association load');
 
   cueOut.setAttribute('role', 'status');
   cueOut.setAttribute('aria-live', 'polite');
   cueOut.setAttribute('aria-atomic', 'true');
   const intro = document.querySelector('#lab3 .lab-head p');
   if (intro) {
-    intro.innerHTML = 'This controlled toy stores random key→value associations in one fixed outer-product matrix. A cue counts as correct only when its intended value is the <strong>nearest stored value by cosine similarity</strong>. The maximum cosine to any wrong value exposes the strongest observed collision.';
+    intro.innerHTML = 'This controlled toy stores random key→value associations in one fixed outer-product matrix. A cue counts as correct only when its intended value is the <strong>nearest stored value by cosine similarity</strong>. The mean strongest wrong-value cosine exposes the typical closest collision.';
   }
   const insight = document.getElementById('tour-3');
   if (insight) {
     insight.innerHTML = '<strong>What to notice:</strong> increasing load can increase collisions in this random linear associative-memory experiment. The curve is empirical and seed-dependent; it demonstrates interference but does <strong>not</strong> establish a capacity limit for BDH or any trained model.';
   }
   const caption = canvas.closest('figure')?.querySelector('figcaption');
-  if (caption?.firstChild) caption.firstChild.textContent = 'Nearest-neighbor accuracy (green) and maximum wrong cosine (dashed red) ';
+  if (caption?.firstChild) caption.firstChild.textContent = 'Nearest-neighbor accuracy (green) and mean strongest wrong-value cosine (dashed red) ';
 
   let points: RetrievalPoint[] = [];
 
@@ -136,7 +138,7 @@ export function initLab3(): void {
         points: points.map((point) => ({ x: point.load, y: point.accuracy })),
       },
       {
-        label: 'maximum wrong-value cosine (live)',
+        label: 'mean strongest wrong-value cosine (live)',
         color: '#ff7d6e',
         dashed: true,
         points: points.map((point) => ({ x: point.load, y: point.maxWrongCosine })),
@@ -153,7 +155,7 @@ export function initLab3(): void {
     strong.textContent = `Selected load ${selected.load}`;
     resultReadout.append(
       strong,
-      ` in a ${dimension}×${dimension} toy state: nearest-neighbor accuracy ${(selected.accuracy * 100).toFixed(1)}%; maximum wrong cosine ${selected.maxWrongCosine.toFixed(3)}. Empirical random-association result—not a BDH capacity claim.`,
+      ` in a ${dimension}×${dimension} toy state: nearest-neighbor accuracy ${(selected.accuracy * 100).toFixed(1)}%; mean strongest wrong-value cosine ${selected.maxWrongCosine.toFixed(3)}. Empirical random-association result—not a BDH capacity claim.`,
     );
   }
 

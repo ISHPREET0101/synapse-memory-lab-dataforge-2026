@@ -70,7 +70,7 @@ The trained projection matrices would be slow parameters. Here they are seeded r
 
 ## Derivation 3: what Lab 2 actually compares
 
-For each earlier position, the lab forms one shared raw similarity:
+Lab 2 creates deterministic unit key vectors in `R^12` with salt `17` and value vectors in `R^8` with salt `53`. For each earlier position, the shared raw similarity is:
 
 ```text
 a_tau = u_t dot x_tau
@@ -79,7 +79,7 @@ a_tau = u_t dot x_tau
 The top profile is:
 
 ```text
-soft_tau = softmax(a_tau / 0.1)
+soft_tau = softmax(a_tau / sqrt(12))
 ```
 
 The bottom profile is:
@@ -176,7 +176,7 @@ It permits an unbounded number of processing steps without adding one state slot
 
 ### “Why are Lab 3 results reproducible?”
 
-Keys/values use deterministic `mulberry32`; load and seed determine the vectors. Curve points average seeds `42`, `59`, and `76`. The cue button uses seed `1234`.
+Keys/values use deterministic `mulberry32`; load and seed determine the vectors. Curve points average seeds `42`, `59`, and `76`. The cue button recomputes that same deterministic experiment for the selected controls.
 
 ### “What is actually precomputed?”
 

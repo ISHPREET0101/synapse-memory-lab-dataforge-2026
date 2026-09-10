@@ -24,9 +24,7 @@ TypeScript, Vite, Canvas 2D, Vitest, and a dependency-free static runtime.
 
 `Pathway` · `BDH` · `linear attention` · `associative memory` · `interactive learning` · `AI interpretability`
 
-## Links to insert after publication
+## Submission links
 
-- Live artifact: `[PUBLIC_ARTIFACT_URL]`
-- Public source: `[PUBLIC_REPOSITORY_URL]`
-
-Do not submit placeholders as links.
+- Live artifact: https://ishpreet0101.github.io/synapse-memory-lab-dataforge-2026/
+- Public source: https://github.com/ISHPREET0101/synapse-memory-lab-dataforge-2026
