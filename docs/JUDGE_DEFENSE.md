@@ -184,7 +184,7 @@ Only the static BDH-versus-Transformer comparison table is a prewritten synthesi
 
 ### “Is the public demo ready?”
 
-The static build is locally ready, but no public artifact URL or public repository is verified yet. Both are remaining submission deliverables.
+Yes. The public artifact is available without sign-in at https://ishpreet0101.github.io/synapse-memory-lab-dataforge-2026/, and the public source repository is https://github.com/ISHPREET0101/synapse-memory-lab-dataforge-2026. The deployment workflow runs the full check suite before publishing. This confirms software and deployment health; it does not turn the toy experiments into official BDH checkpoint evidence.
 
 ### “How did AI contribute?”
 
