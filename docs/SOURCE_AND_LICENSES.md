@@ -14,7 +14,7 @@ This file is the provenance ledger for Synapse Memory Lab. It should be updated 
 | Canvas visuals | Generated at runtime by project-authored code | Original procedural graphics; no external images | MIT |
 | Favicon | Inline SVG circle in `index.html` | Original geometric mark | MIT |
 
-Copyright notice: Copyright (c) 2026 Synapse Memory Lab contributors.
+Copyright notice: Copyright (c) 2026 Ishpreet Singh and Shikhar Goel, Synapse Memory Lab contributors.
 
 ## Research sources and reference code
 
@@ -67,7 +67,7 @@ Exact resolved versions and transitive packages are pinned in `package-lock.json
 
 ## AI assistance disclosure
 
-OpenAI Codex assisted with drafting and editing code, prose, research organization, tests, and documentation. The team remains accountable for verification and must be able to explain every component. No AI-generated output is represented as a paper result, a live checkpoint result, or an independently replicated benchmark.
+OpenAI Codex assisted with drafting and editing code, prose, research organization, tests, documentation, and deployment setup. Ishpreet Singh and Shikhar Goel remain accountable for verification and must be able to explain every component. No AI-generated output is represented as a paper result, a live checkpoint result, or an independently replicated benchmark.
 
 ## Project license
 

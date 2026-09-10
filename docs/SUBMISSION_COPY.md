@@ -4,6 +4,10 @@
 
 Synapse Memory Lab
 
+## Team
+
+Ishpreet Singh and Shikhar Goel
+
 ## Tagline
 
 See causal linear attention become a fixed-shape synaptic memory—and then break it on purpose.

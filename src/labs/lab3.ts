@@ -1,89 +1,6 @@
 /** Lab 3: empirical nearest-neighbor retrieval from a toy outer-product memory. */
-import { mulberry32 } from '../engine/retrieval.js';
+import { runCapacityExperiment, type CapacityPoint } from '../engine/retrieval.js';
 import { renderChart } from '../viz/chart.js';
-
-interface RetrievalPoint {
-  load: number;
-  accuracy: number;
-  maxWrongCosine: number;
-}
-
-function randomUnit(random: () => number, dimension: number): Float32Array {
-  const vector = new Float32Array(dimension);
-  let squaredNorm = 0;
-  for (let i = 0; i < dimension; i++) {
-    vector[i] = random() * 2 - 1;
-    squaredNorm += vector[i] * vector[i];
-  }
-  const norm = Math.sqrt(squaredNorm) || 1;
-  for (let i = 0; i < dimension; i++) vector[i] /= norm;
-  return vector;
-}
-
-function cosine(a: Float32Array, b: Float32Array): number {
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  return dot / (Math.sqrt(normA * normB) + 1e-12);
-}
-
-function runNearestNeighborTrial(dimension: number, load: number, seed = 42): RetrievalPoint {
-  if (load === 0) return { load, accuracy: 1, maxWrongCosine: 0 };
-  const random = mulberry32(seed * 100003 + load);
-  const keys: Float32Array[] = [];
-  const values: Float32Array[] = [];
-  const state = new Float32Array(dimension * dimension);
-  for (let item = 0; item < load; item++) {
-    const key = randomUnit(random, dimension);
-    const value = randomUnit(random, dimension);
-    keys.push(key);
-    values.push(value);
-    for (let row = 0; row < dimension; row++) {
-      for (let column = 0; column < dimension; column++) {
-        state[row * dimension + column] += key[row] * value[column];
-      }
-    }
-  }
-
-  let correct = 0;
-  let maxWrongCosineSum = 0;
-  for (let item = 0; item < load; item++) {
-    const read = new Float32Array(dimension);
-    for (let column = 0; column < dimension; column++) {
-      let sum = 0;
-      for (let row = 0; row < dimension; row++) sum += keys[item][row] * state[row * dimension + column];
-      read[column] = sum;
-    }
-    let nearestIndex = -1;
-    let nearestCosine = -Infinity;
-    let strongestWrongCosine = -Infinity;
-    for (let candidate = 0; candidate < load; candidate++) {
-      const similarity = cosine(read, values[candidate]);
-      if (candidate !== item) strongestWrongCosine = Math.max(strongestWrongCosine, similarity);
-      if (similarity > nearestCosine) {
-        nearestCosine = similarity;
-        nearestIndex = candidate;
-      }
-    }
-    if (nearestIndex === item) correct++;
-    maxWrongCosineSum += Number.isFinite(strongestWrongCosine) ? strongestWrongCosine : 0;
-  }
-  return { load, accuracy: correct / load, maxWrongCosine: maxWrongCosineSum / load };
-}
-
-function averageTrial(dimension: number, load: number): RetrievalPoint {
-  const trials = [42, 59, 76].map((seed) => runNearestNeighborTrial(dimension, load, seed));
-  return {
-    load,
-    accuracy: trials.reduce((sum, point) => sum + point.accuracy, 0) / trials.length,
-    maxWrongCosine: trials.reduce((sum, point) => sum + point.maxWrongCosine, 0) / trials.length,
-  };
-}
 
 export function initLab3(): void {
   const loadSlider = document.getElementById('lab3-load') as HTMLInputElement | null;
@@ -117,7 +34,7 @@ export function initLab3(): void {
   const caption = canvas.closest('figure')?.querySelector('figcaption');
   if (caption?.firstChild) caption.firstChild.textContent = 'Nearest-neighbor accuracy (green) and mean strongest wrong-value cosine (dashed red) ';
 
-  let points: RetrievalPoint[] = [];
+  let points: CapacityPoint[] = [];
 
   function recomputeCurve(): void {
     const dimension = +dimensionControl.value;
@@ -126,7 +43,7 @@ export function initLab3(): void {
     const step = Math.max(1, Math.round(xMax / 16));
     const loads = new Set<number>([0, selectedLoad, xMax]);
     for (let load = step; load < xMax; load += step) loads.add(load);
-    points = [...loads].sort((a, b) => a - b).map((load) => averageTrial(dimension, load));
+    points = runCapacityExperiment(dimension, [...loads].sort((a, b) => a - b), 42);
     draw(dimension, selectedLoad, xMax);
   }
 
@@ -135,7 +52,7 @@ export function initLab3(): void {
       {
         label: 'nearest-neighbor retrieval accuracy (live)',
         color: '#6ee0b0',
-        points: points.map((point) => ({ x: point.load, y: point.accuracy })),
+        points: points.map((point) => ({ x: point.load, y: point.recall })),
       },
       {
         label: 'mean strongest wrong-value cosine (live)',
@@ -149,13 +66,13 @@ export function initLab3(): void {
     if (selected) announce(dimension, selected);
   }
 
-  function announce(dimension: number, selected: RetrievalPoint): void {
+  function announce(dimension: number, selected: CapacityPoint): void {
     resultReadout.replaceChildren();
     const strong = document.createElement('strong');
     strong.textContent = `Selected load ${selected.load}`;
     resultReadout.append(
       strong,
-      ` in a ${dimension}×${dimension} toy state: nearest-neighbor accuracy ${(selected.accuracy * 100).toFixed(1)}%; mean strongest wrong-value cosine ${selected.maxWrongCosine.toFixed(3)}. Empirical random-association result—not a BDH capacity claim.`,
+      ` in a ${dimension}×${dimension} toy state: nearest-neighbor accuracy ${(selected.recall * 100).toFixed(1)}%; mean strongest wrong-value cosine ${selected.maxWrongCosine.toFixed(3)}. Empirical random-association result—not a BDH capacity claim.`,
     );
   }
 

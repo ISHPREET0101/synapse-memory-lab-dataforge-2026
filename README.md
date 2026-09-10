@@ -6,16 +6,20 @@ Synapse Memory Lab is a self-contained interactive visual essay for the DataForg
 
 The browser experience opens with a deterministic toy simulation already running. Learners can change the update scale, decay, query position, replay speed, associative-memory dimension, and load, then see the consequences immediately.
 
+## Team
+
+- Ishpreet Singh
+- Shikhar Goel
+
 ## Submission status
 
 - **Local artifact:** implemented, tested, and buildable.
-- **Private GitHub review repository:** https://github.com/ISHPREET0101/synapse-memory-lab-dataforge-2026
+- **Public source repository:** https://github.com/ISHPREET0101/synapse-memory-lab-dataforge-2026
 - **Public artifact URL:** **not deployed yet**.
-- **Public source repository:** **not published yet**.
 - **Official BDH/BDH-CQ checkpoint:** **not run**. No live checkpoint is bundled or called.
 - **Evidence boundary:** the labs are local toy/abstracted computations; paper metrics and architecture properties are author-reported, not independently reproduced here.
 
-The private repository is available for team review; PS-1 still requires a public source repository and a no-sign-in public artifact. Do not replace the status above with placeholders presented as live links.
+The source repository is public. The GitHub Pages deployment is configured; the artifact URL remains marked pending until it has been checked without sign-in.
 
 ## Audience, prerequisites, and learning objectives
 
@@ -183,7 +187,7 @@ The tests do **not** establish equation-level equivalence to all details of the 
 
 ## AI assistance disclosure
 
-OpenAI Codex was used as an assistant during drafting and editing of code, explanatory prose, research organization, tests, and documentation. AI output was not treated as experimental evidence. The submitting team is responsible for checking the implementation, sources, licenses, and every claim, and must be able to derive and defend the system without relying on the assistant. Any later human reviewers, mentors, generators, or reused assets should be appended to this disclosure before submission.
+OpenAI Codex was used as an assistant during drafting and editing of code, explanatory prose, research organization, tests, documentation, and deployment setup. AI output was not treated as experimental evidence. The submitting team, Ishpreet Singh and Shikhar Goel, is responsible for checking the implementation, sources, licenses, and every claim, and must be able to derive and defend the system without relying on the assistant. Any later human reviewers, mentors, generators, or reused assets should be appended to this disclosure before submission.
 
 ## Credits and licenses
 
