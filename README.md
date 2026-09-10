@@ -13,13 +13,13 @@ The browser experience opens with a deterministic toy simulation already running
 
 ## Submission status
 
-- **Local artifact:** implemented, tested, and buildable.
+- **Public artifact:** deployed and verified without sign-in.
 - **Public source repository:** https://github.com/ISHPREET0101/synapse-memory-lab-dataforge-2026
-- **Public artifact URL:** **not deployed yet**.
+- **Public artifact URL:** https://ishpreet0101.github.io/synapse-memory-lab-dataforge-2026/
 - **Official BDH/BDH-CQ checkpoint:** **not run**. No live checkpoint is bundled or called.
 - **Evidence boundary:** the labs are local toy/abstracted computations; paper metrics and architecture properties are author-reported, not independently reproduced here.
 
-The source repository is public. The GitHub Pages deployment is configured; the artifact URL remains marked pending until it has been checked without sign-in.
+The source repository and GitHub Pages artifact are public. The deployed experience and all three interactive labs were checked without sign-in, including a 390 px mobile viewport.
 
 ## Audience, prerequisites, and learning objectives
 
@@ -179,11 +179,11 @@ The tests do **not** establish equation-level equivalence to all details of the 
 - In this code, `x` and `y` are non-negative, but `v*`, the raw `x outer v*` write, and effective `sigma Dy` can be signed because the random projection matrices are signed. Therefore the page's broad “non-negative update” wording should be understood as non-negative neural activity/readout in the toy, not a guarantee that every stored matrix entry is non-negative.
 - Lab 2's explicit oracle retains history only to validate the same linear result. A fixed aggregate state alone does not preserve a free, exact per-token attention map.
 - Lab 2 proves equality only for the implemented causal decayed linear-attention operation; the softmax output is a non-equivalent contrast.
-- Lab 3 implements a generic linear associative memory. Nearest-value accuracy and strongest-wrong-value similarity are toy diagnostics, not BDH benchmarks.
+- Lab 3 implements a generic linear associative memory. Nearest-value accuracy and mean strongest-wrong-value similarity are toy diagnostics, not BDH benchmarks.
 - `O(1)` means constant in **sequence length** for a fixed architecture. The state still costs `O(ND)` per head/layer.
 - Fixed state supports arbitrarily many update steps, not perfect recall of arbitrarily many items.
 - Claims about trained sparsity, heavy-tailed connectivity, GPT-2 comparisons, BDH-CQ results, cost, and latent reasoning are author-reported citations. They were not independently reproduced.
-- No live BDH/BDH-CQ checkpoint has been run. No public URL or public repository is currently deployed.
+- No live BDH/BDH-CQ checkpoint has been run. The public deployment demonstrates only the deterministic browser experiments documented here.
 
 ## AI assistance disclosure
 
@@ -201,16 +201,10 @@ See:
 
 ## Deployment
 
-The app is a static Vite build. Run `npm run build`, then publish the contents of `dist/` to a static host. `vite.config.ts` uses `base: './'`, so relative assets work from a project subpath (including GitHub Pages).
+The app is deployed by `.github/workflows/deploy.yml`: every push to `main` installs locked dependencies, runs the complete check suite, builds `dist/`, and publishes it through GitHub Pages. `vite.config.ts` uses `base: './'`, so relative assets work from the repository subpath.
 
-Before declaring the submission deployed:
+- Live artifact: https://ishpreet0101.github.io/synapse-memory-lab-dataforge-2026/
+- Public source: https://github.com/ISHPREET0101/synapse-memory-lab-dataforge-2026
+- Continuous integration: `.github/workflows/ci.yml` runs `npm ci && npm run check` for pushes and pull requests.
 
-1. publish the source repository publicly;
-2. configure the host to deploy `dist/` (or run `npm ci && npm run build` and use `dist` as the output directory);
-3. open the public artifact in a signed-out/private browser window;
-4. confirm all three labs move and controls recompute;
-5. confirm the source links and mobile layout;
-6. rerun `npm test` and `npm run build` from a clean checkout; and
-7. replace this README's status with the verified public artifact and repository URLs.
-
-At present, deployment instructions are ready, but **there is no verified public deployment or public repository URL**.
+The public deployment was verified without sign-in on desktop and at a 390 px mobile viewport. All three labs loaded and recomputed from their controls.
